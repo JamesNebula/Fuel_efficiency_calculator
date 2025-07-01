@@ -12,7 +12,6 @@ SAMPLE_DATA = [
     ["TRUCK001", "2024-01-17", "45920", "46280", "82.1", "Delivery Truck"],
 ]
 
-# create sample data file function, takes a filename="vehicle_data.csv" as param, the function will create a csv file with vehicle data. 
 def create_sample_data_file(filename="vehicle_data.csv"):
     
     with open(filename, 'w', newline='') as file:
