@@ -1,0 +1,132 @@
+The way this program works.
+
+                                            -----main function-----
+
+1. calls create_sample_data_function(data_file) to create file
+2. loads vehicle data with read_vehicle_data(data_file) function, with the data_file as an arg. This is stored in a variable named vehicle_records
+3. analyzes data with the analyze_vehicle_efficiency(vehicle_records) function. which is stored in a variable named vehicle_stats
+4. generates insights using the find_efficiency_insights(vehicle_stats) function. Which is stored in a variable named insights.
+5. displays the results with the generate_report(vehicle_stats, insights) function that takes vehicle_stats and insights as args.
+6. Saves the analysis to a file with save_analysis_to_file(vehicle_stats, insights) function. That takes vehicle_stats and insights as args.
+
+
+                            -----create_sample_data(filename='vehicle_data.csv')----
+
+1. takes our filename we want to create: in this case vehicle_data.csv as an arg
+2. opens file: with open(filename, 'w', newline='') as file:
+3. it then converts lists or tuple data into delimited strings (aligning with csv standard). and writes it to the file. writer = csv.writer(file)
+4. it then does writer.writerows(SAMPLEDATA) which writes multiple rows of data to the csv file.
+
+
+                                    -----read_vehicle_data(data_file)-----
+
+1. takes filename as a parameter. which is called in our main function with data_file as the arg
+2. creates vehicle_records array
+3. in a try block it opens filename parameter: with open(filename, 'r') as file:
+4. uses csv_reader = csv.DictReader(file). which allows data to be accessed by name instead of index i.e record['vehicle_id'].
+5. loops over each row in variable csv_reader and assigns each row of our csv file to a key in a new dictionary called record. 
+6. it then appends this record dictionary to our vehicle_records array at the top of the function
+7. it then returns the vehicle_records array
+8. it then catches any FileNotFound errors and Exceptions
+
+
+                            -----analyze_vehicle_efficiency(vehicle_records)-----
+
+1. returns empty dict if not vehicle_records
+2. creates vehicle stats dict
+3. loops over record in vehicle_records
+4. assigns record['vehicle_id] to a variable called vehicle_id
+5. utilises calculate_fuel_efficiency(record) function with record as an arg. stores it in a variable called mpg
+6. checks if vehicle_id is not in vehicle_stats and if so assigns vehicle_stats[vehicle_id] to a dictionary with keys set to 0. if vehicle_id isnt in our stats it should show 0 for our key values 
+7. if vehicle_id is in vehicle_stats it calculates distance: record['odometer_end'] - record['odometer_start'] in our vehicle_records array
+8. it then calculates total distance with vehicle_stats[vehicle_id]['total_distance'] += distance
+9. it then calculates total fuel with vehicle_stats[vehicle_id]['total_fuel'] += record['fuel_added']
+10. it then calculates trip count with vehicle_stats[vehicle_id]['trip_count'] += 1
+11. then calculates mpg readings by appending mpg to vehicle_stats[vehicle_id]['mpg_readings'].append(mpg)
+12. it then calculates overall efficiency for each vehicle, by looping for vehicle_id, stats in vehicle_stats.items(). it checks to make sure there is any fuel: if stats['total_fuel'] > 0:
+if so, it calculates our overall mpg stats['overall_mpg'] to round(stats['total_distance'] / stats['total_fuel'], 2)
+then it calculates our average mpg with stats['average_mpg'] = round(sum(stats['mpg_readings']) / len(stats['mpg_readings']), 2)
+13. else, if ther is no fuel set overall mpg and average mpg to 0: ie stats['overall_mpg'] = 0
+14. Then returns the vehicle_stats dictionary
+
+
+                                        -----find_efficiency_insights-----
+
+1. takes vehicle stats dict as arg
+2. checks if there is no vehicle stats, and if so returns empty dict
+3. sorts vehicles by efficiency with sorted(vehicle_stats.items(),
+ key=lambda x: x[1]['overall_mpg],
+ reverse=True
+) and sets it to vehicles_by_efficiency variable.
+4. accesses most efficient and least efficient vehicles with vehicles_by_efficiency[0] for most efficient and vehicles_by_efficiency[-1] for least and stores them in least_efficient and most_efficient variables.
+5. It then calculates fleet averages by vehicle type, starting with an empty dict called type_stats
+6. It then loops over vehicle_id, stats in vehicle_stats.items(). It accesses the stats['vehicle_type'] and stores it in a variable called vtype. It then checks if vtype not in type_stats. if so it sets type_stats[vtype] = {'mpg_values': [], 'count': 0}
+7. otherwise if vtype is in type_stats, it appends type_stats[vtype]['mpg_values'].append(stats['overall_mpg']).
+8. It then increments type_stats[vtype]['count'] += 1
+9. Then it calculates averages by first looping over vtype, data in type_stats.items(): it then calculates the average mpg with data['average_mpg'] = round(sum(data['mpg_values']) / len(data['mpg_values']), 2)
+10. It then creates a dictionary named insights that organises efficiency data like insights = {
+    'most_efficient_vehicle': most_efficient,
+    'least_efficient_vehicle': least_efficient,
+    'vehicle_type_averages': type_stats,
+    'total_vehicles_analyzed': len(vehicle_stats)
+}
+11. finally, it returns the insights dict
+
+
+                                            -----generate_report-----
+
+1. takes vehicle_stats and insights as args
+2. It loops over vehicle_id, stats in vehicle_stats.items(): and proceeds to print out all of our results like: 
+        print(f"\n🚙 {vehicle_id} ({stats['vehicle_type']})")
+        print(f"   Overall MPG: {stats['overall_mpg']} mpg")
+        print(f"   Average MPG: {stats['average_mpg']} mpg")
+        print(f"   Total Distance: {stats['total_distance']} miles")
+        print(f"   Total Fuel: {stats['total_fuel']} gallons")
+        print(f"   Number of Trips: {stats['trip_count']}")
+
+3. Here, it displays efficiency insights, first checking if insights:
+4. access insights['most_efficient_vehicle'] and store it in a most_eff variable, access insights['least_efficient_vehicle] and store it in least_eff. with this information we display it to the user: 
+        print(f"🏆 Most Efficient: {most_eff[0]} ({most_eff[1]['overall_mpg']} mpg)")
+        print(f"⚠️  Least Efficient: {least_eff[0]} ({least_eff[1]['overall_mpg']} mpg)")
+
+5. It then calculates the efficiency_difference with most_eff[1]['overall_mpg'] - least_eff[1]['overall_mpg']. under this print 
+        print(f"📈 Efficiency Gap: {efficiency_difference} mpg")
+
+6. It then begins the vehicle type analysis by looping over vtype, data in insights['vehicle_type_averages'].items(): and prints:
+        print(f"   {vtype}: {data['average_mpg']} mpg (avg)")
+
+7. It then presents the recommendations, starting with if insights:
+8. It then accesses insights['least_efficient_vehicle'] and stores it in least_eff
+9. It then checks if least_eff[1]['overall_mpg'] < 10: if so it prints 
+        print(f"🔧 {least_eff[0]} needs immediate maintenance check")
+10. otherwise it sets efficiency_gap = most_eff[1]['overall_mpg'] - least_eff[1]['overall_mpg']
+11. It then checks if efficiency_gap > 5: and prints:
+        print("📚 Consider driver training for fuel-efficient driving")
+        print("🔍 Investigate maintenance schedules for underperforming vehicles")
+
+
+                                        -----save_analysis_to_file-----
+
+1. takes vehicle_stats dict, insights dict and filename='fuel_analysis_report.txt' as arguments
+2. in a try: block it opens file with: open(filename, 'w') as file: it then proceeds to write data with 
+        file.write("VEHICLE FUEL EFFICIENCY ANALYSIS REPORT\n")
+        file.write("="*50 + "\n")
+        file.write(f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
+
+3. still inside the with open: it writes individual vehicle stats. It loops over vehicle_id, stats in vehicle_stats.items(): and writes data in like so: 
+        file.write(f"Vehicle: {vehicle_id}\n")
+        file.write(f"Type: {stats['vehicle_type']}\n")
+        file.write(f"Overall MPG: {stats['overall_mpg']}\n")
+        file.write(f"Total Distance: {stats['total_distance']} miles\n")
+        file.write(f"Total Fuel: {stats['total_fuel']} gallons\n")
+        file.write("-" * 30 + "\n")
+
+4. still inside the with open: It checks if insights: and writes in our insights data like so: 
+        file.write(f"\nMost Efficient Vehicle: {insights['most_efficient_vehicle'][0]}\n")
+        file.write(f"Least Efficient Vehicle: {insights['least_efficient_vehicle'][0]}\n")
+
+5. Then outside the with open, but still in the try block It then confirms analysis has been saved to user with: print(f"✅ Analysis saved to '{filename}'")
+
+6. It then finishes the try except with 
+        except Exception as e:
+            print(f"❌ Error saving file: {e}")
